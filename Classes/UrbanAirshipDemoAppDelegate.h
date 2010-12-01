@@ -7,6 +7,7 @@
 //
 
 #import <UIKit/UIKit.h>
+#import "UrbanAirshipDemoConstants.h"
 
 @interface UrbanAirshipDemoAppDelegate : NSObject <UIApplicationDelegate> {
     UIWindow *window;
