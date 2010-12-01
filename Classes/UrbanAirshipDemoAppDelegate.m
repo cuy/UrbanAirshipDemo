@@ -7,6 +7,8 @@
 //
 
 #import "UrbanAirshipDemoAppDelegate.h"
+#import "ASIHTTPRequest.h"
+#import "JSON.h"
 
 @implementation UrbanAirshipDemoAppDelegate
 
@@ -22,6 +24,18 @@
     [registrationURL release];
     registrationRequest.username = APPLICATION_KEY;
     registrationRequest.password = APPLICATION_SECRET;
+    
+    NSDictionary *jsonContent = [NSDictionary dictionaryWithObjectsAndKeys:@"userAlias", @"alias", nil];
+    NSMutableData *postData = [[NSMutableData alloc] initWithData:[[jsonContent JSONRepresentation] dataUsingEncoding:NSUTF8StringEncoding]];
+    registrationRequest.postBody = postData;
+    
+    [registrationRequest start];
+    
+    BOOL registrationSuccess = [registrationRequest responseStatusCode] == 200 | [registrationRequest responseStatusCode] == 201;
+    NSLog(@"registration responseString = %@", [registrationRequest responseString]);
+    
+    [registrationRequest release];
+    return registrationSuccess;
 }
 
 
@@ -101,6 +115,7 @@
     _deviceToken = deviceToken;
     _registered = [self registerDeviceTokenToUrbanAirship:deviceToken];
     if (_registered) {
+        // do something
     }
 }
 
