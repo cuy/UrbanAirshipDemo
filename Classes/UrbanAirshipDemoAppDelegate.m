@@ -14,6 +14,18 @@
 
 
 #pragma mark -
+#pragma mark UrbanAirship 
+
+- (BOOL)registerDeviceTokenToUrbanAirship:(NSData *)deviceToken {
+    NSURL *registrationURL = [[NSURL alloc] initWithString:[NSString stringWithFormat:@"%@/api/device_tokens/%@", URBANAIRSHIP, [deviceToken description]]];
+    ASIHTTPRequest *registrationRequest = [[ASIHTTPRequest alloc] initWithURL:registrationURL];
+    [registrationURL release];
+    registrationRequest.username = APPLICATION_KEY;
+    registrationRequest.password = APPLICATION_SECRET;
+}
+
+
+#pragma mark -
 #pragma mark Application lifecycle
 
 - (BOOL)application:(UIApplication *)application didFinishLaunchingWithOptions:(NSDictionary *)launchOptions {    
@@ -87,6 +99,9 @@
     [deviceToken retain];
     [_deviceToken release];
     _deviceToken = deviceToken;
+    _registered = [self registerDeviceTokenToUrbanAirship:deviceToken];
+    if (_registered) {
+    }
 }
 
 - (void)application:(UIApplication *)app didFailToRegisterForRemoteNotificationsWithError:(NSError *)error {
