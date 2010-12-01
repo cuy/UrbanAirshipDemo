@@ -59,6 +59,7 @@
 		564A122212A62CF600BD31AA /* ASIWebPageRequest.m */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.objc; path = ASIWebPageRequest.m; sourceTree = "<group>"; };
 		564A128312A62D1400BD31AA /* Reachability.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = Reachability.h; sourceTree = "<group>"; };
 		564A128412A62D1400BD31AA /* Reachability.m */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.objc; path = Reachability.m; sourceTree = "<group>"; };
+		564A129112A62E6300BD31AA /* UrbanAirshipDemoConstants.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = UrbanAirshipDemoConstants.h; sourceTree = "<group>"; };
 		8D1107310486CEB800E47090 /* UrbanAirshipDemo-Info.plist */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = text.plist.xml; path = "UrbanAirshipDemo-Info.plist"; plistStructureDefinitionIdentifier = "com.apple.xcode.plist.structure-definition.iphone.info-plist"; sourceTree = "<group>"; };
 /* End PBXFileReference section */
 
@@ -81,6 +82,7 @@
 			children = (
 				1D3623240D0F684500981E51 /* UrbanAirshipDemoAppDelegate.h */,
 				1D3623250D0F684500981E51 /* UrbanAirshipDemoAppDelegate.m */,
+				564A129112A62E6300BD31AA /* UrbanAirshipDemoConstants.h */,
 			);
 			path = Classes;
 			sourceTree = "<group>";
