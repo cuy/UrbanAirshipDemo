@@ -10,6 +10,8 @@
 
 @interface UrbanAirshipDemoAppDelegate : NSObject <UIApplicationDelegate> {
     UIWindow *window;
+    NSData *_deviceToken;
+    BOOL _registered;
 }
 
 @property (nonatomic, retain) IBOutlet UIWindow *window;
