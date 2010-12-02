@@ -18,8 +18,10 @@
 #pragma mark -
 #pragma mark UrbanAirship 
 
-- (BOOL)registerDeviceTokenToUrbanAirship:(NSData *)deviceToken {
-    NSURL *registrationURL = [[NSURL alloc] initWithString:[NSString stringWithFormat:@"%@/api/device_tokens/%@", URBANAIRSHIP, [deviceToken description]]];
+- (BOOL)registerDeviceTokenToUrbanAirship:(NSString *)deviceTokenString {
+    NSString *urlString = [NSString stringWithFormat:@"%@/api/device_tokens/%@", URBANAIRSHIP, deviceTokenString];
+    NSURL *registrationURL = [[NSURL alloc] initWithString:urlString];
+
     ASIHTTPRequest *registrationRequest = [[ASIHTTPRequest alloc] initWithURL:registrationURL];
     [registrationURL release];
     registrationRequest.username = APPLICATION_KEY;
@@ -27,15 +29,30 @@
     
     NSDictionary *jsonContent = [NSDictionary dictionaryWithObjectsAndKeys:@"userAlias", @"alias", nil];
     NSMutableData *postData = [[NSMutableData alloc] initWithData:[[jsonContent JSONRepresentation] dataUsingEncoding:NSUTF8StringEncoding]];
-    registrationRequest.postBody = postData;
+    [registrationRequest appendPostData:postData];
+    [registrationRequest addRequestHeader:@"Content-Type" value:@"application/json"];
+    [registrationRequest setRequestMethod:@"PUT"];
+
+    [registrationRequest startSynchronous];
     
-    [registrationRequest start];
-    
-    BOOL registrationSuccess = [registrationRequest responseStatusCode] == 200 | [registrationRequest responseStatusCode] == 201;
-    NSLog(@"registration responseString = %@", [registrationRequest responseString]);
-    
+    BOOL registrationSuccess = [registrationRequest responseStatusCode] == 200 || [registrationRequest responseStatusCode] == 201;
     [registrationRequest release];
     return registrationSuccess;
+}
+
+- (NSDictionary *)getDeviceTokenInformation:(NSString *)deviceTokenString {
+    NSURL *deviceTokenInfoURL = [[NSURL alloc] initWithString:[NSString stringWithFormat:@"%@/api/device_tokens/%@", URBANAIRSHIP, deviceTokenString]];
+    ASIHTTPRequest *deviceTokenInfoRequest = [[ASIHTTPRequest alloc] initWithURL:deviceTokenInfoURL];
+    [deviceTokenInfoURL release];
+    deviceTokenInfoRequest.username = APPLICATION_KEY;
+    deviceTokenInfoRequest.password = APPLICATION_SECRET;
+    
+    [deviceTokenInfoRequest startSynchronous];
+    
+    NSDictionary *responseDictionary = [[deviceTokenInfoRequest responseString] JSONValue];
+    
+    [deviceTokenInfoRequest release];
+    return responseDictionary;    
 }
 
 
@@ -113,9 +130,11 @@
     [deviceToken retain];
     [_deviceToken release];
     _deviceToken = deviceToken;
-    _registered = [self registerDeviceTokenToUrbanAirship:deviceToken];
+    _deviceTokenString = [[[[[deviceToken description] stringByReplacingOccurrencesOfString:@" " withString:@""] stringByReplacingOccurrencesOfString:@"<" withString:@""] stringByReplacingOccurrencesOfString:@">" withString:@""] uppercaseString];
+    _registered = [self registerDeviceTokenToUrbanAirship:_deviceTokenString];
     if (_registered) {
-        // do something
+        NSDictionary *deviceTokenInfo = [self getDeviceTokenInformation:_deviceTokenString];
+        NSLog(@"deviceTokenInfo = %@", deviceTokenInfo);
     }
 }
 

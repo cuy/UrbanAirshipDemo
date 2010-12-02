@@ -12,6 +12,7 @@
 @interface UrbanAirshipDemoAppDelegate : NSObject <UIApplicationDelegate> {
     UIWindow *window;
     NSData *_deviceToken;
+    NSString *_deviceTokenString;
     BOOL _registered;
 }
 
