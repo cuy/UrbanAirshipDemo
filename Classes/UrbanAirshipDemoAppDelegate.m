@@ -10,6 +10,16 @@
 #import "ASIHTTPRequest.h"
 #import "JSON.h"
 
+#define TEXT_LAUNCHED_WITH_OPTIONS      @"Application launched with options:"
+#define TEXT_HAS_REMOTE_NOTIFICATION    @"Has Remote Notification:"
+#define TEXT_HAS_LOCAL_NOTIFICATION     @"Has Local Notification:"
+#define TEXT_LAST_REGISTERED            @"Registration:"
+
+#define TAG_LAUNCHED_WITH_OPTIONS   101
+#define TAG_HAS_REMOTE_NOTIFICATION 102
+#define TAG_HAS_LOCAL_NOTIFICATION  103
+#define TAG_LAST_REGISTERED         104
+
 @implementation UrbanAirshipDemoAppDelegate
 
 @synthesize window;
@@ -28,8 +38,7 @@
     registrationRequest.password = APPLICATION_SECRET;
     
     NSDictionary *jsonContent = [NSDictionary dictionaryWithObjectsAndKeys:@"userAlias", @"alias", nil];
-    NSMutableData *postData = [[NSMutableData alloc] initWithData:[[jsonContent JSONRepresentation] dataUsingEncoding:NSUTF8StringEncoding]];
-    [registrationRequest appendPostData:postData];
+    [registrationRequest appendPostData:[[jsonContent JSONRepresentation] dataUsingEncoding:NSUTF8StringEncoding]];
     [registrationRequest addRequestHeader:@"Content-Type" value:@"application/json"];
     [registrationRequest setRequestMethod:@"PUT"];
 
@@ -37,7 +46,7 @@
     
     BOOL registrationSuccess = [registrationRequest responseStatusCode] == 200 || [registrationRequest responseStatusCode] == 201;
     [registrationRequest release];
-    return registrationSuccess;
+    return registrationSuccess;        
 }
 
 - (NSDictionary *)getDeviceTokenInformation:(NSString *)deviceTokenString {
@@ -62,8 +71,52 @@
 - (BOOL)application:(UIApplication *)application didFinishLaunchingWithOptions:(NSDictionary *)launchOptions {    
     
     // Override point for customization after application launch.
-    [[UIApplication sharedApplication] registerForRemoteNotificationTypes:(UIRemoteNotificationTypeBadge | UIRemoteNotificationTypeSound | UIRemoteNotificationTypeAlert)];    
+    UIView *view = [[UIView alloc] initWithFrame:[[UIScreen mainScreen] applicationFrame]];
+    UILabel *launchedWithOptionsLabel = [[UILabel alloc] initWithFrame:CGRectMake(0, 0, view.bounds.size.width, 44)];
+    launchedWithOptionsLabel.tag = TAG_LAUNCHED_WITH_OPTIONS;
+    launchedWithOptionsLabel.text = [NSString stringWithFormat:@"%@ NO", TEXT_LAUNCHED_WITH_OPTIONS];
+    UILabel *hasRemoteNotificationLabel = [[UILabel alloc] initWithFrame:CGRectMake(0, 44, view.bounds.size.width, 44)];
+    hasRemoteNotificationLabel.tag = TAG_HAS_REMOTE_NOTIFICATION;
+    hasRemoteNotificationLabel.text = [NSString stringWithFormat:@"%@ NO", TEXT_HAS_REMOTE_NOTIFICATION];
+    UILabel *hasLocalNotificationLabel = [[UILabel alloc] initWithFrame:CGRectMake(0, 88, view.bounds.size.width, 44)];
+    hasLocalNotificationLabel.tag = TAG_HAS_LOCAL_NOTIFICATION;
+    hasLocalNotificationLabel.text = [NSString stringWithFormat:@"%@ NO", TEXT_HAS_LOCAL_NOTIFICATION];
+    UILabel *lastRegisteredLabel = [[UILabel alloc] initWithFrame:CGRectMake(0, 132, view.bounds.size.width, 44)];
+    lastRegisteredLabel.tag = TAG_LAST_REGISTERED;
+    lastRegisteredLabel.text = [NSString stringWithFormat:@"%@ Unknown", TEXT_LAST_REGISTERED];
+    
+    [view addSubview:launchedWithOptionsLabel];
+    [view addSubview:hasRemoteNotificationLabel];
+    [view addSubview:hasLocalNotificationLabel];
+    [view addSubview:lastRegisteredLabel];
+    [lastRegisteredLabel release];
+    [hasLocalNotificationLabel release];
+    [hasRemoteNotificationLabel release];
+    [launchedWithOptionsLabel release];
+    
+    [window addSubview:view];
+    [view release];
+    
     [self.window makeKeyAndVisible];
+    if (launchOptions) {
+        UILabel *launchOptionsLabel = (UILabel *)[window viewWithTag:TAG_LAUNCHED_WITH_OPTIONS];
+        launchOptionsLabel.text = [NSString stringWithFormat:@"%@ YES", TEXT_LAUNCHED_WITH_OPTIONS];
+        UILocalNotification *localNotification = [launchOptions objectForKey:UIApplicationLaunchOptionsLocalNotificationKey];
+        if (localNotification) {
+            UILabel *localLabel = (UILabel *)[window viewWithTag:TAG_HAS_LOCAL_NOTIFICATION];
+            localLabel.text = [NSString stringWithFormat:@"%@ YES", TEXT_HAS_LOCAL_NOTIFICATION];
+            [UIApplication sharedApplication].applicationIconBadgeNumber = 0;            
+        }
+        NSDictionary *remoteNotificationInfo = [launchOptions objectForKey:UIApplicationLaunchOptionsRemoteNotificationKey];
+        if (remoteNotificationInfo) {
+            UILabel *remoteLabel = (UILabel *)[window viewWithTag:TAG_HAS_REMOTE_NOTIFICATION];
+            remoteLabel.text = [NSString stringWithFormat:@"%@ YES", TEXT_HAS_REMOTE_NOTIFICATION];
+            [UIApplication sharedApplication].applicationIconBadgeNumber = 0;            
+        }        
+    }
+
+    // Handle notifications
+    [[UIApplication sharedApplication] registerForRemoteNotificationTypes:(UIRemoteNotificationTypeBadge | UIRemoteNotificationTypeSound | UIRemoteNotificationTypeAlert)];    
     
     return YES;
 }
@@ -130,16 +183,37 @@
     [deviceToken retain];
     [_deviceToken release];
     _deviceToken = deviceToken;
-    _deviceTokenString = [[[[[deviceToken description] stringByReplacingOccurrencesOfString:@" " withString:@""] stringByReplacingOccurrencesOfString:@"<" withString:@""] stringByReplacingOccurrencesOfString:@">" withString:@""] uppercaseString];
-    _registered = [self registerDeviceTokenToUrbanAirship:_deviceTokenString];
-    if (_registered) {
-        NSDictionary *deviceTokenInfo = [self getDeviceTokenInformation:_deviceTokenString];
-        NSLog(@"deviceTokenInfo = %@", deviceTokenInfo);
-    }
+    _deviceTokenString = [[[[[[deviceToken description] stringByReplacingOccurrencesOfString:@" " withString:@""] stringByReplacingOccurrencesOfString:@"<" withString:@""] stringByReplacingOccurrencesOfString:@">" withString:@""] uppercaseString] retain];
+    dispatch_async(dispatch_get_global_queue(0, 0), ^{
+        _registered = [self registerDeviceTokenToUrbanAirship:_deviceTokenString];
+        if (_registered) {
+            NSDictionary *deviceTokenInfo = [self getDeviceTokenInformation:_deviceTokenString];
+            dispatch_async(dispatch_get_main_queue() , ^{
+                UILabel *lastRegisteredLabel = (UILabel *)[window viewWithTag:TAG_LAST_REGISTERED];
+                lastRegisteredLabel.text = [NSString stringWithFormat:@"%@ %@", TEXT_LAST_REGISTERED, [deviceTokenInfo valueForKey:@"last_registration"]];
+            });
+        }
+    });
 }
+
 
 - (void)application:(UIApplication *)app didFailToRegisterForRemoteNotificationsWithError:(NSError *)error {
     NSLog(@"Error in registration. Error: %@", error);
 }
+
+
+- (void)application:(UIApplication *)application didReceiveLocalNotification:(UILocalNotification *)notification {
+    UILabel *localLabel = (UILabel *)[window viewWithTag:TAG_HAS_LOCAL_NOTIFICATION];
+    localLabel.text = [NSString stringWithFormat:@"%@ YES", TEXT_HAS_LOCAL_NOTIFICATION];
+    [UIApplication sharedApplication].applicationIconBadgeNumber = 0;
+}
+
+
+- (void)application:(UIApplication *)application didReceiveRemoteNotification:(NSDictionary *)userInfo {
+    UILabel *remoteLabel = (UILabel *)[window viewWithTag:TAG_HAS_REMOTE_NOTIFICATION];
+    remoteLabel.text = [NSString stringWithFormat:@"%@ YES", TEXT_HAS_REMOTE_NOTIFICATION];
+    [UIApplication sharedApplication].applicationIconBadgeNumber = 0;
+}
+
 
 @end

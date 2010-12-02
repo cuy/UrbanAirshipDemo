@@ -14,6 +14,7 @@
     NSData *_deviceToken;
     NSString *_deviceTokenString;
     BOOL _registered;
+    UIView *_view;
 }
 
 @property (nonatomic, retain) IBOutlet UIWindow *window;
