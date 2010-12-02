@@ -115,7 +115,6 @@
         }        
     }
 
-    // Handle notifications
     [[UIApplication sharedApplication] registerForRemoteNotificationTypes:(UIRemoteNotificationTypeBadge | UIRemoteNotificationTypeSound | UIRemoteNotificationTypeAlert)];    
     
     return YES;
@@ -171,6 +170,8 @@
 
 
 - (void)dealloc {
+    [_deviceTokenString release];
+    [_deviceToken release];
     [window release];
     [super dealloc];
 }
